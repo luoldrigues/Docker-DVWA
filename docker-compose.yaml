@@ -1,0 +1,47 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apache_php
+    ports:
+      - "80:80"
+    volumes:
+      - ./web:/var/www/html
+      - ./php.ini:/usr/local/etc/php/php.ini
+    secrets:
+      - db_root_password
+    environment:
+      PHP_INI_DIR: /usr/local/etc/php
+      DB_SERVER: db                    # Nome do serviço do banco no Docker Compose
+      DB_DATABASE: dvwa                # Nome do banco de dados
+      DB_USER: dvwa                    # Usuário do banco
+      DB_PASSWORD: p@ssw0rd            # Senha do banco
+      DB_PORT: 3306                    # Porta do banco
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mariadb:10.3
+    container_name: mariadb
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: /run/secrets/db_root_password  # Senha de root (do arquivo)
+      MYSQL_DATABASE: dvwa                                # Banco a ser criado
+      MYSQL_USER: dvwa                                    # Usuário a ser criado
+      MYSQL_PASSWORD: p@ssw0rd                            # Senha do usuário
+    secrets:
+      - db_root_password
+    restart: always
+
+volumes:
+  db_data:
+
+secrets:
+  db_root_password:
+    file: ./db_root_password.txt
